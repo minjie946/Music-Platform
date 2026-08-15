@@ -1,0 +1,46 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      APP_REDIS_URL: redis://redis:6379/0
+      APP_DATA_DIR: /app/data
+    volumes:
+      - app-data:/app/data
+      - model-cache:/app/.cache
+    depends_on:
+      - redis
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    command: celery -A app.celery_app.celery_app worker --beat --loglevel=info --concurrency=1
+    environment:
+      APP_REDIS_URL: redis://redis:6379/0
+      APP_DATA_DIR: /app/data
+    volumes:
+      - app-data:/app/data
+      - model-cache:/app/.cache
+    depends_on:
+      - redis
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+
+volumes:
+  redis-data:
+  app-data:
+  model-cache:

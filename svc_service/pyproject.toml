@@ -1,0 +1,31 @@
+[project]
+name = "svc-service"
+version = "0.1.0"
+description = "Singing Voice Conversion sidecar (so-vits-svc only) for Music Studio"
+readme = "README.md"
+requires-python = ">=3.10,<3.12"
+
+# so-vits-svc-fork is the only bundled engine (training + inference).
+# It pulls most of its numpy/torch/torchaudio/librosa/soundfile stack, so we
+# avoid over-pinning those here. torchcodec is explicit because recent
+# torchaudio.load() delegates decoding to it; psutil is needed by Lightning
+# when logging Apple MPS device stats.
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "python-multipart>=0.0.9",
+    "pydantic>=2.6",
+    "so-vits-svc-fork>=4.1.61",
+    "torchcodec>=0.7",
+    "psutil>=5.9",
+]
+
+[tool.uv]
+no-build-isolation-package = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

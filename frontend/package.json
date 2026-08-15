@@ -1,0 +1,44 @@
+{
+  "name": "music-gui-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:desktop": "vite --port 5173 --strictPort",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "desktop:bootstrap": "bash ../scripts/bootstrap_desktop.sh",
+    "desktop:preflight": "node ../scripts/run_python.mjs ../scripts/desktop_preflight.py",
+    "desktop:runtime": "node ../scripts/run_python.mjs ../scripts/build_desktop_runtime.py",
+    "desktop:dev": "npm run desktop:preflight && node ../scripts/run_python.mjs ../scripts/run_tauri.py dev",
+    "desktop:build": "npm run desktop:preflight && npm run desktop:runtime && node ../scripts/run_python.mjs ../scripts/run_tauri.py build --bundles app",
+    "desktop:build:all": "npm run desktop:preflight && npm run desktop:runtime && node ../scripts/run_python.mjs ../scripts/run_tauri.py build",
+    "desktop:build:mac-ci": "bash ../scripts/package_macos_unsigned.sh",
+    "desktop:build:win": "node ../scripts/run_python.mjs ../scripts/package_windows_portable.py",
+    "desktop:build:zip": "npm run desktop:build && cd src-tauri/target/release/bundle/macos && ditto -c -k --sequesterRsrc --keepParent \"Music Studio.app\" ../Music_Studio_1.0.0_aarch64.app.zip",
+    "desktop:build:dmg": "npm run desktop:preflight && npm run desktop:runtime && node ../scripts/run_python.mjs ../scripts/run_tauri.py build --bundles dmg",
+    "desktop:build:thin": "npm run desktop:preflight && node ../scripts/run_python.mjs ../scripts/run_tauri.py build --bundles app"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.62.7",
+    "@tauri-apps/api": "^2.0.0",
+    "axios": "^1.7.9",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tone": "^15.1.22",
+    "wavesurfer.js": "^7.8.11"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  }
+}
