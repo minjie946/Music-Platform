@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+logs
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.vite/
+frontend/src-tauri/gen/
+frontend/src-tauri/target/
+frontend/src-tauri/desktop-runtime/backend-runtime.tar.gz
+frontend/src-tauri/desktop-runtime/svc-runtime.tar.gz
+frontend/src-tauri/desktop-runtime/acestep-runtime.tar.gz
+frontend/src-tauri/desktop-runtime/.runtime-ready
+frontend/src-tauri/desktop-runtime/.svc-runtime-ready
+frontend/src-tauri/desktop-runtime/.acestep-runtime-ready
+frontend/src-tauri/desktop-runtime/backend-runtime/*
+!frontend/src-tauri/desktop-runtime/backend-runtime/.gitkeep
+frontend/src-tauri/desktop-runtime/python/*
+!frontend/src-tauri/desktop-runtime/python/.gitkeep
+
+# App data & models
+backend/data/
+desktop-data/
+backend/.cache/
+# 合成测试数据集（由 backend/training/make_synthetic_dataset.py 生成，勿入库）
+backend/training/_smoke_ds/
+*.log
+
+# Celery beat runtime files
+celerybeat-schedule*
+*.pid
+
+# Celery control runtime files (mailbox/exchange，含本机 hostname，勿入库)
+backend/control/
+
+# Env
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+external/
+
+# AI 生成的内部开发计划文档（含个人绝对路径，勿入库）
+._agent/
+
+# IDE / AI 工具工作目录
+.trae/
+
+# 项目内 FFmpeg/micromamba 运行时（由 start.sh 自动安装，体积大，勿入库）
+vendor/
+
+# ACE-Step 源码包（预置文件，默认放 <workspace>/resources，可在设置配置 resources_dir，勿入库）
+resources/
+
+# SVC sidecar 运行时（虚拟环境、训练样本/产物、缓存）
+svc_service/.venv/
+svc_service/voices/
+svc_service/.work/
+# SVC 大文件权重（content-vec/HuBERT/底模）：默认放项目外，首次启动按需下载，勿入库
+svc_service/pretrained/
+uv.lock

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Music Studio",
+  "version": "1.0.0",
+  "identifier": "com.musicstudio.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev:desktop",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Music Studio",
+        "width": 1280,
+        "height": 860,
+        "minWidth": 1024,
+        "minHeight": 720
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": {
+      "../../backend/app": "backend/app",
+      "../../backend/desktop_launcher.py": "backend/desktop_launcher.py",
+      "../../backend/requirements.txt": "backend/requirements.txt",
+      "../../backend/requirements-dev.txt": "backend/requirements-dev.txt",
+      "../../backend/requirements-cascade.txt": "backend/requirements-cascade.txt",
+      "desktop-runtime": "desktop-runtime",
+      "../../scripts/dependency_helpers.sh": "scripts/dependency_helpers.sh",
+      "../../scripts/launch_acestep.sh": "scripts/launch_acestep.sh",
+      "../../scripts/launch_acestep_runtime.py": "scripts/launch_acestep_runtime.py",
+      "../../svc_service/app": "svc_service/app",
+      "../../svc_service/pyproject.toml": "svc_service/pyproject.toml",
+      "../../svc_service/README.md": "svc_service/README.md"
+    }
+  }
+}

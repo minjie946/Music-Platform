@@ -1,0 +1,189 @@
+name: Desktop Packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+env:
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
+  CARGO_NET_RETRY: "10"
+  CARGO_HTTP_TIMEOUT: "120"
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: "sparse"
+
+jobs:
+  macos-arm64:
+    name: macos-arm64
+    runs-on: macos-14
+    env:
+      CARGO_HOME: ${{ github.workspace }}/.cargo-home-macos
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Configure Cargo registry
+        shell: bash
+        run: |
+          mkdir -p "$CARGO_HOME" frontend/src-tauri/.cargo
+          cat > frontend/src-tauri/.cargo/config.toml <<'EOF'
+          [net]
+          retry = 10
+          EOF
+          echo "CARGO_HOME=$CARGO_HOME"
+          cat frontend/src-tauri/.cargo/config.toml
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: |
+          npm config set registry https://registry.npmjs.org
+          npm ci
+
+      - name: Install ffmpeg for macOS runtime
+        run: |
+          brew list ffmpeg >/dev/null 2>&1 || brew install ffmpeg
+          FFMPEG_BIN="$(brew --prefix ffmpeg)/bin/ffmpeg"
+          FFPROBE_BIN="$(brew --prefix ffmpeg)/bin/ffprobe"
+          test -x "$FFMPEG_BIN"
+          test -x "$FFPROBE_BIN"
+          echo "APP_FFMPEG_EXE=$FFMPEG_BIN" >> "$GITHUB_ENV"
+          echo "APP_FFPROBE_EXE=$FFPROBE_BIN" >> "$GITHUB_ENV"
+          echo "$(dirname "$FFMPEG_BIN")" >> "$GITHUB_PATH"
+          "$FFMPEG_BIN" -version | head -1
+
+      - name: Verify ffmpeg for macOS runtime
+        run: |
+          echo "APP_FFMPEG_EXE=$APP_FFMPEG_EXE"
+          echo "APP_FFPROBE_EXE=$APP_FFPROBE_EXE"
+          test -x "$APP_FFMPEG_EXE"
+          test -x "$APP_FFPROBE_EXE"
+          which ffmpeg
+          which ffprobe
+          ffmpeg -version | head -1
+
+      - name: Cache macOS desktop runtime archives
+        uses: actions/cache@v4
+        with:
+          path: frontend/src-tauri/desktop-runtime
+          key: desktop-runtime-macos-arm64-${{ hashFiles('backend/requirements*.txt', 'svc_service/pyproject.toml', 'svc_service/uv.lock', 'scripts/build_desktop_runtime.py', 'scripts/launch_acestep_runtime.py', 'resources/ACE-Step-1.5-main.zip') }}
+          restore-keys: |
+            desktop-runtime-macos-arm64-
+
+      - name: Build macOS desktop package
+        run: bash ./package-desktop.sh
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: music-studio-macos-arm64
+          path: |
+            frontend/src-tauri/target/release/bundle/**
+          if-no-files-found: error
+
+  windows-x64:
+    name: windows-x64
+    runs-on: windows-latest
+    env:
+      CARGO_HOME: ${{ github.workspace }}\.cargo-home-windows
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Configure Cargo registry
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:CARGO_HOME | Out-Null
+          New-Item -ItemType Directory -Force -Path "frontend/src-tauri/.cargo" | Out-Null
+          @"
+          [net]
+          retry = 10
+          "@ | Set-Content -Path "frontend/src-tauri/.cargo/config.toml" -Encoding utf8
+          Write-Host "CARGO_HOME=$env:CARGO_HOME"
+          Get-Content "frontend/src-tauri/.cargo/config.toml"
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: |
+          npm config set registry https://registry.npmjs.org
+          npm ci
+
+      - name: Install ffmpeg for Windows runtime
+        shell: pwsh
+        run: |
+          choco install ffmpeg -y --no-progress
+          $ffmpeg = (Get-Command ffmpeg.exe).Source
+          $ffprobe = (Get-Command ffprobe.exe).Source
+          if (-not (Test-Path $ffmpeg)) { throw "ffmpeg.exe not found" }
+          if (-not (Test-Path $ffprobe)) { throw "ffprobe.exe not found" }
+          "APP_FFMPEG_EXE=$ffmpeg" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "APP_FFPROBE_EXE=$ffprobe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Split-Path $ffmpeg | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          & $ffmpeg -version | Select-Object -First 1
+
+      - name: Verify ffmpeg for Windows runtime
+        shell: pwsh
+        run: |
+          Write-Host "APP_FFMPEG_EXE=$env:APP_FFMPEG_EXE"
+          Write-Host "APP_FFPROBE_EXE=$env:APP_FFPROBE_EXE"
+          if (-not (Test-Path $env:APP_FFMPEG_EXE)) { throw "APP_FFMPEG_EXE is not executable" }
+          if (-not (Test-Path $env:APP_FFPROBE_EXE)) { throw "APP_FFPROBE_EXE is not executable" }
+          Get-Command ffmpeg.exe
+          Get-Command ffprobe.exe
+          ffmpeg -version | Select-Object -First 1
+
+      - name: Build Windows portable package
+        working-directory: frontend
+        run: npm run desktop:build:win
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: music-studio-windows-x64
+          path: |
+            frontend/src-tauri/target/release/bundle/**
+          if-no-files-found: error

@@ -1,0 +1,10 @@
+# Local, project-contained dev extras (no system services required).
+-r requirements.txt
+
+# Bundled redis-server binary; lets `run_local.py` start Redis from Python.
+redislite==6.2.912183
+
+# Project-contained ffmpeg/ffprobe (static binaries), no system install needed.
+# First use downloads the platform binary into the package's bin/ directory.
+static-ffmpeg==3.0
+

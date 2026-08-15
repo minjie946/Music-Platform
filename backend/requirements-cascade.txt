@@ -1,0 +1,8 @@
+# Optional: route A (lead/backing vocal cascade).
+# Installed separately because audio-separator pulls its own ONNX/torch stack;
+# install into the same venv when you enable "级联拆分主唱/伴唱" in settings.
+#
+#   pip install -r requirements-cascade.txt
+#
+# First run downloads the karaoke model (default UVR_MDXNET_KARA_2.onnx).
+audio-separator
